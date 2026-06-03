@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>T60 Analyse</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f0f11;
+    --surface: #1a1a1f;
+    --surface2: #22222a;
+    --border: #2e2e3a;
+    --accent: #00e5a0;
+    --accent2: #7c6aff;
+    --warn: #ff6b6b;
+    --text: #e8e8f0;
+    --text2: #888899;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  header h1 {
+    font-family: var(--mono);
+    font-size: 1.3rem;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  header span {
+    font-size: 0.75rem;
+    color: var(--text2);
+    font-family: var(--mono);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .card-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 1rem;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+
+  .file-drop {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 28px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .file-drop:hover, .file-drop.drag-over {
+    border-color: var(--accent);
+    background: rgba(0,229,160,0.04);
+  }
+
+  .file-drop input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .file-drop-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+  }
+
+  .file-drop p {
+    color: var(--text2);
+    font-size: 0.9rem;
+  }
+
+  .file-drop strong {
+    color: var(--accent);
+  }
+
+  .file-list {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .file-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .file-item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .file-name {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .file-status {
+    font-size: 0.7rem;
+    font-family: var(--mono);
+    padding: 2px 8px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+
+  .file-status.ok { background: rgba(0,229,160,0.15); color: var(--accent); }
+  .file-status.err { background: rgba(255,107,107,0.15); color: var(--warn); }
+  .file-status.loading { background: rgba(124,106,255,0.15); color: var(--accent2); }
+
+  .file-comment {
+    font-size: 0.82rem;
+    color: var(--text2);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    width: 100%;
+    font-family: var(--sans);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .file-comment:focus { border-color: var(--accent2); color: var(--text); }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0f0f11;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #00ffb3;
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .btn-export {
+    background: var(--accent2);
+    color: #fff;
+    margin-top: 16px;
+  }
+
+  .btn-export:hover {
+    background: #9080ff;
+    transform: translateY(-1px);
+  }
+
+  .progress-bar {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 14px;
+    display: none;
+  }
+
+  .progress-bar.active { display: block; }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.3s ease;
+  }
+
+  .results { display: none; }
+  .results.show { display: block; }
+
+  canvas {
+    width: 100% !important;
+    border-radius: 8px;
+    display: block;
+  }
+
+  .t60-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    margin-top: 10px;
+  }
+
+  .t60-table th {
+    color: var(--text2);
+    padding: 6px 8px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+  }
+
+  .t60-table th:first-child { text-align: left; }
+
+  .t60-table td {
+    padding: 7px 8px;
+    text-align: right;
+    border-bottom: 1px solid rgba(46,46,58,0.5);
+    color: var(--text);
+  }
+
+  .t60-table td:first-child { text-align: left; color: var(--accent); }
+
+  .t60-val { color: var(--text); }
+  .t60-sd { color: var(--text2); font-size: 0.7rem; }
+
+  .stats-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .stat-box {
+    flex: 1;
+    min-width: 80px;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--text2);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .stat-unit {
+    font-size: 0.7rem;
+    color: var(--text2);
+  }
+
+  #exportCanvas { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>T60 // ANALYSE</h1>
+  <span>Raumakustik · Smartphone</span>
+</header>
+
+<!-- Projekt -->
+<div class="card">
+  <div class="card-label">Projekt</div>
+  <input type="text" id="projectName" placeholder="Projektname (z.B. Wohnzimmer 2026)" />
+</div>
+
+<!-- Dateien -->
+<div class="card">
+  <div class="card-label">Audio-Dateien</div>
+  <div class="file-drop" id="fileDrop">
+    <input type="file" id="fileInput" multiple accept="audio/*" />
+    <div class="file-drop-icon">🎤</div>
+    <p><strong>Dateien auswählen</strong><br>WAV, M4A, MP3 · min. 3 Dateien</p>
+  </div>
+  <div class="file-list" id="fileList"></div>
+</div>
+
+<!-- Analyse Button -->
+<button class="btn btn-primary" id="analyseBtn" disabled>ANALYSIEREN</button>
+<div class="progress-bar" id="progressBar">
+  <div class="progress-fill" id="progressFill" style="width:0%"></div>
+</div>
+
+<!-- Results -->
+<div class="results" id="results">
+
+  <div class="card" style="margin-top:20px;">
+    <div class="card-label">Übersicht</div>
+    <div class="stats-row" id="statsRow"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Abklingkurven @ 500 Hz</div>
+    <canvas id="decayChart"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="card-label">T60 pro Oktavband</div>
+    <canvas id="t60Chart"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Messwerte</div>
+    <table class="t60-table" id="t60Table"></table>
+  </div>
+
+  <button class="btn btn-export" id="exportBtn">⬇ ALS PNG EXPORTIEREN</button>
+
+</div>
+
+<canvas id="exportCanvas"></canvas>
+
+<script>
+// ─── State ───────────────────────────────────────────────
+let files = [];
+let results = [];
+let decayCtx, t60Ctx;
+
+const BANDS = [125, 250, 500, 1000, 2000, 4000];
+const COLORS = ['#00e5a0','#7c6aff','#ff6b6b','#ffd166','#06d6a0','#118ab2'];
+
+// ─── File Input ───────────────────────────────────────────
+document.getElementById('fileInput').addEventListener('change', e => {
+  addFiles(Array.from(e.target.files));
+});
+
+const drop = document.getElementById('fileDrop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag-over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
+drop.addEventListener('drop', e => {
+  e.preventDefault();
+  drop.classList.remove('drag-over');
+  addFiles(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('audio/')));
+});
+
+function addFiles(newFiles) {
+  newFiles.forEach(f => {
+    if (!files.find(x => x.file.name === f.name && x.file.size === f.size)) {
+      files.push({ file: f, comment: '', status: 'pending' });
+    }
+  });
+  renderFileList();
+  updateBtn();
+}
+
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  list.innerHTML = '';
+  files.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    div.innerHTML = `
+      <div class="file-item-top">
+        <span class="file-name">${item.file.name}</span>
+        <span class="file-status ${item.status === 'ok' ? 'ok' : item.status === 'err' ? 'err' : 'loading'}" id="status-${i}">
+          ${item.status === 'pending' ? 'bereit' : item.status === 'ok' ? '✓ ok' : item.status === 'err' ? '✗ fehler' : '⟳'}
+        </span>
+      </div>
+      <input class="file-comment" placeholder="Kommentar (z.B. Ecke links, Klatschen Mitte)" value="${item.comment}" data-idx="${i}" />
+    `;
+    list.appendChild(div);
+  });
+
+  list.querySelectorAll('.file-comment').forEach(inp => {
+    inp.addEventListener('input', e => {
+      files[+e.target.dataset.idx].comment = e.target.value;
+    });
+  });
+}
+
+function updateBtn() {
+  document.getElementById('analyseBtn').disabled = files.length < 1;
+}
+
+// ─── Audio Processing ────────────────────────────────────
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
+
+async function decodeFile(file) {
+  const buf = await file.arrayBuffer();
+  return audioCtx.decodeAudioData(buf);
+}
+
+function getChannel(buffer) {
+  // Mix to mono
+  const ch = buffer.numberOfChannels;
+  const len = buffer.length;
+  const out = new Float32Array(len);
+  for (let c = 0; c < ch; c++) {
+    const data = buffer.getChannelData(c);
+    for (let i = 0; i < len; i++) out[i] += data[i] / ch;
+  }
+  return out;
+}
+
+function biquadBandpass(samples, sr, fc, Q) {
+  const w0 = 2 * Math.PI * fc / sr;
+  const alpha = Math.sin(w0) / (2 * Q);
+  const b0 = alpha, b1 = 0, b2 = -alpha;
+  const a0 = 1 + alpha, a1 = -2 * Math.cos(w0), a2 = 1 - alpha;
+  const out = new Float32Array(samples.length);
+  let x1=0, x2=0, y1=0, y2=0;
+  for (let i = 0; i < samples.length; i++) {
+    const x0 = samples[i];
+    const y0 = (b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2) / a0;
+    out[i] = y0;
+    x2=x1; x1=x0; y2=y1; y1=y0;
+  }
+  // Second pass (4th order)
+  let x1b=0,x2b=0,y1b=0,y2b=0;
+  const out2 = new Float32Array(out.length);
+  for (let i=0;i<out.length;i++){
+    const x0=out[i];
+    const y0=(b0*x0+b1*x1b+b2*x2b-a1*y1b-a2*y2b)/a0;
+    out2[i]=y0; x2b=x1b;x1b=x0;y2b=y1b;y1b=y0;
+  }
+  return out2;
+}
+
+function findPeak(samples) {
+  let max = 0, idx = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const a = Math.abs(samples[i]);
+    if (a > max) { max = a; idx = i; }
+  }
+  return idx;
+}
+
+function schroeder(samples) {
+  const sq = samples.map(x => x * x);
+  const rev = new Float64Array(sq.length);
+  rev[sq.length - 1] = sq[sq.length - 1];
+  for (let i = sq.length - 2; i >= 0; i--) rev[i] = rev[i+1] + sq[i];
+  const emax = rev[0];
+  return Array.from(rev).map(v => 10 * Math.log10(Math.max(v / emax, 1e-12)));
+}
+
+function fitT60(decay, sr) {
+  // T30: fit from -5 to -35 dB
+  const n = decay.length;
+  let i5=-1, i35=-1;
+  for (let i=0;i<n;i++){
+    if (i5<0 && decay[i]<=-5) i5=i;
+    if (i35<0 && decay[i]<=-35) i35=i;
+  }
+  if (i5<0||i35<0||i35<=i5) return null;
+  // Linear regression
+  const len = i35-i5;
+  let sx=0,sy=0,sxy=0,sx2=0;
+  for (let i=i5;i<=i35;i++){
+    const x=(i-i5)/sr;
+    const y=decay[i];
+    sx+=x; sy+=y; sxy+=x*y; sx2+=x*x;
+  }
+  const N=len+1;
+  const slope=(N*sxy-sx*sy)/(N*sx2-sx*sx);
+  if (slope>=0) return null;
+  const T30=-30/slope;
+  return T30*2; // T60
+}
+
+function processFile(buffer) {
+  const sr = buffer.sampleRate;
+  const mono = getChannel(buffer);
+  const peakIdx = findPeak(mono);
+  const impulse = mono.slice(peakIdx);
+
+  const bandResults = BANDS.map(fc => {
+    const Q = 1.414; // ~1 octave bandwidth
+    const filtered = biquadBandpass(impulse, sr, fc, Q);
+    const decay = schroeder(filtered);
+    const t60 = fitT60(decay, sr);
+    return { fc, decay, t60 };
+  });
+
+  return { bandResults, sr, impulse };
+}
+
+// ─── Analyse ─────────────────────────────────────────────
+document.getElementById('analyseBtn').addEventListener('click', async () => {
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+  const btn = document.getElementById('analyseBtn');
+  btn.disabled = true;
+  const pb = document.getElementById('progressBar');
+  const pf = document.getElementById('progressFill');
+  pb.classList.add('active');
+  results = [];
+
+  for (let i = 0; i < files.length; i++) {
+    const item = files[i];
+    pf.style.width = (i / files.length * 100) + '%';
+    item.status = 'loading';
+    renderFileList();
+    try {
+      const buffer = await decodeFile(item.file);
+      const res = processFile(buffer);
+      results.push({ name: item.file.name, comment: item.comment, ...res });
+      item.status = 'ok';
+    } catch(e) {
+      item.status = 'err';
+    }
+    renderFileList();
+  }
+
+  pf.style.width = '100%';
+  setTimeout(() => { pb.classList.remove('active'); pf.style.width='0%'; }, 600);
+  btn.disabled = false;
+
+  if (results.length > 0) renderResults();
+});
+
+// ─── Render Results ───────────────────────────────────────
+function renderResults() {
+  document.getElementById('results').classList.add('show');
+
+  // Stats
+  const band500 = results.map(r => r.bandResults.find(b=>b.fc===500)?.t60).filter(v=>v!=null);
+  const mean500 = band500.reduce((a,b)=>a+b,0)/band500.length;
+  const statsRow = document.getElementById('statsRow');
+  statsRow.innerHTML = `
+    <div class="stat-box">
+      <div class="stat-label">Messungen</div>
+      <div class="stat-value">${results.length}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">T60 @ 500 Hz</div>
+      <div class="stat-value">${mean500.toFixed(2)}<span class="stat-unit"> s</span></div>
+    </div>
+  `;
+
+  drawDecayChart();
+  drawT60Chart();
+  drawT60Table();
+}
+
+function drawDecayChart() {
+  const canvas = document.getElementById('decayChart');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.offsetWidth * dpr;
+  canvas.height = 220 * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = canvas.offsetWidth, H = 220;
+
+  ctx.fillStyle = '#1a1a1f';
+  ctx.fillRect(0,0,W,H);
+
+  const pad = {top:16,right:16,bottom:36,left:44};
+  const pw = W-pad.left-pad.right;
+  const ph = H-pad.top-pad.bottom;
+
+  // Grid
+  ctx.strokeStyle = '#2e2e3a';
+  ctx.lineWidth = 1;
+  [-10,-20,-30,-40,-50,-60].forEach(db => {
+    const y = pad.top + ph * (db / -70);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y); ctx.lineTo(pad.left+pw, y);
+    ctx.stroke();
+    ctx.fillStyle = '#555566';
+    ctx.font = '9px Space Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(db+'dB', pad.left-4, y+4);
+  });
+
+  // Time axis labels
+  ctx.fillStyle = '#555566';
+  ctx.font = '9px Space Mono, monospace';
+  ctx.textAlign = 'center';
+  [0,0.5,1,1.5,2,2.5,3].forEach(t => {
+    const x = pad.left + (t/3)*pw;
+    if (x <= pad.left+pw) {
+      ctx.fillText(t+'s', x, H-pad.bottom+14);
+    }
+  });
+
+  // Decay curves @ 500 Hz
+  results.forEach((r, ri) => {
+    const band = r.bandResults.find(b=>b.fc===500);
+    if (!band) return;
+    const decay = band.decay;
+    const sr = r.sr;
+    const maxSamples = Math.min(decay.length, sr * 3.2);
+    const step = Math.max(1, Math.floor(maxSamples / pw));
+
+    ctx.beginPath();
+    ctx.strokeStyle = COLORS[ri % COLORS.length];
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.85;
+
+    let started = false;
+    for (let i = 0; i < maxSamples; i += step) {
+      const x = pad.left + (i / maxSamples) * pw;
+      const db = Math.max(-70, decay[i]);
+      const y = pad.top + ph * (db / -70);
+      if (!started) { ctx.moveTo(x,y); started=true; }
+      else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  });
+
+  // -5 dB line
+  ctx.strokeStyle = 'rgba(0,229,160,0.3)';
+  ctx.setLineDash([4,4]);
+  ctx.lineWidth = 1;
+  const y5 = pad.top + ph*(5/70);
+  ctx.beginPath(); ctx.moveTo(pad.left,y5); ctx.lineTo(pad.left+pw,y5); ctx.stroke();
+  // -35 dB line
+  const y35 = pad.top + ph*(35/70);
+  ctx.beginPath(); ctx.moveTo(pad.left,y35); ctx.lineTo(pad.left+pw,y35); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Labels
+  ctx.fillStyle = 'rgba(0,229,160,0.6)';
+  ctx.font = '8px Space Mono, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('-5 dB', pad.left+2, y5-3);
+  ctx.fillText('-35 dB', pad.left+2, y35-3);
+
+  // Legend
+  results.forEach((r,ri) => {
+    ctx.fillStyle = COLORS[ri%COLORS.length];
+    ctx.fillRect(pad.left + ri*70, H-8, 12, 2);
+    ctx.fillStyle = '#888899';
+    ctx.font = '8px Space Mono, monospace';
+    ctx.textAlign = 'left';
+    const shortName = r.name.length > 10 ? r.name.slice(0,10)+'…' : r.name;
+    ctx.fillText(shortName, pad.left+ri*70+16, H-5);
+  });
+}
+
+function drawT60Chart() {
+  const canvas = document.getElementById('t60Chart');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.offsetWidth * dpr;
+  canvas.height = 220 * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = canvas.offsetWidth, H = 220;
+
+  ctx.fillStyle = '#1a1a1f';
+  ctx.fillRect(0,0,W,H);
+
+  const pad = {top:16,right:16,bottom:36,left:44};
+  const pw = W-pad.left-pad.right;
+  const ph = H-pad.top-pad.bottom;
+
+  // Compute mean + SD per band
+  const bandStats = BANDS.map(fc => {
+    const vals = results.map(r => r.bandResults.find(b=>b.fc===fc)?.t60).filter(v=>v!=null&&v>0&&v<15);
+    if (!vals.length) return { fc, mean: null, sd: 0 };
+    const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
+    const sd = Math.sqrt(vals.reduce((a,b)=>a+(b-mean)**2,0)/vals.length);
+    return { fc, mean, sd };
+  });
+
+  const maxT = Math.max(4, ...bandStats.map(b=>b.mean||0).map(v=>v+0.5));
+  const barW = pw / BANDS.length * 0.55;
+  const gap = pw / BANDS.length;
+
+  // Grid
+  ctx.strokeStyle = '#2e2e3a';
+  ctx.lineWidth = 1;
+  [1,2,3,4].filter(v=>v<=maxT+0.5).forEach(t => {
+    const y = pad.top + ph*(1-t/maxT);
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+pw,y); ctx.stroke();
+    ctx.fillStyle='#555566';
+    ctx.font='9px Space Mono, monospace';
+    ctx.textAlign='right';
+    ctx.fillText(t+'s', pad.left-4, y+4);
+  });
+
+  bandStats.forEach((b, i) => {
+    const x = pad.left + gap*i + gap/2 - barW/2;
+    const color = COLORS[i];
+
+    if (b.mean !== null) {
+      const barH = ph * (b.mean / maxT);
+      const y = pad.top + ph - barH;
+
+      // Bar
+      ctx.fillStyle = color + '33';
+      ctx.fillRect(x, y, barW, barH);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x, y, barW, barH);
+
+      // Error bar
+      if (b.sd > 0) {
+        const sdPx = ph * (b.sd / maxT);
+        const cx = x + barW/2;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx, y - sdPx); ctx.lineTo(cx, y + sdPx);
+        ctx.moveTo(cx-4, y-sdPx); ctx.lineTo(cx+4, y-sdPx);
+        ctx.moveTo(cx-4, y+sdPx); ctx.lineTo(cx+4, y+sdPx);
+        ctx.stroke();
+      }
+
+      // Value label
+      ctx.fillStyle = color;
+      ctx.font = 'bold 9px Space Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(b.mean.toFixed(2), x+barW/2, y-5);
+    } else {
+      ctx.fillStyle = '#333';
+      ctx.font = '9px Space Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('—', x+barW/2, pad.top+ph/2);
+    }
+
+    // Freq label
+    const fcLabel = b.fc >= 1000 ? (b.fc/1000)+'k' : b.fc;
+    ctx.fillStyle = '#888899';
+    ctx.font = '9px Space Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(fcLabel, x+barW/2, H-pad.bottom+12);
+  });
+
+  // Y axis label
+  ctx.save();
+  ctx.translate(12, pad.top+ph/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillStyle='#555566';
+  ctx.font='9px Space Mono, monospace';
+  ctx.textAlign='center';
+  ctx.fillText('T60 [s]', 0, 0);
+  ctx.restore();
+}
+
+function drawT60Table() {
+  const table = document.getElementById('t60Table');
+  const bandStats = BANDS.map(fc => {
+    const vals = results.map(r => r.bandResults.find(b=>b.fc===fc)?.t60).filter(v=>v!=null&&v>0&&v<15);
+    const mean = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    const sd = vals.length > 1 ? Math.sqrt(vals.reduce((a,b)=>a+(b-mean)**2,0)/vals.length) : 0;
+    return { fc, mean, sd, n: vals.length };
+  });
+
+  let html = `<thead><tr>
+    <th>Band</th>
+    <th>T60 (s)</th>
+    <th>± SD</th>
+    <th>n</th>
+  </tr></thead><tbody>`;
+
+  bandStats.forEach(b => {
+    const fcLabel = b.fc >= 1000 ? (b.fc/1000)+' kHz' : b.fc+' Hz';
+    html += `<tr>
+      <td>${fcLabel}</td>
+      <td>${b.mean !== null ? b.mean.toFixed(3) : '—'}</td>
+      <td class="t60-sd">${b.mean !== null && b.sd > 0 ? '±'+b.sd.toFixed(3) : '—'}</td>
+      <td class="t60-sd">${b.n}</td>
+    </tr>`;
+  });
+
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+// ─── PNG Export ───────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', exportPNG);
+
+function exportPNG() {
+  const W = 800;
+  const projectName = document.getElementById('projectName').value || 'T60 Analyse';
+  const dateStr = new Date().toLocaleDateString('de-DE');
+
+  // Estimate height
+  const fileRows = results.length;
+  const H = 120 + 240 + 240 + 160 + fileRows * 38 + 60;
+
+  const canvas = document.getElementById('exportCanvas');
+  canvas.width = W;
+  canvas.height = H;
+  canvas.style.display = 'none';
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#0f0f11';
+  ctx.fillRect(0,0,W,H);
+
+  let y = 0;
+
+  // Header
+  ctx.fillStyle = '#1a1a1f';
+  ctx.fillRect(0,0,W,80);
+  ctx.strokeStyle = '#00e5a0';
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(0,80); ctx.lineTo(W,80); ctx.stroke();
+
+  ctx.fillStyle = '#00e5a0';
+  ctx.font = 'bold 22px "Space Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('T60 // ANALYSE', 32, 34);
+
+  ctx.fillStyle = '#888899';
+  ctx.font = '13px "DM Sans", sans-serif';
+  ctx.fillText(projectName, 32, 56);
+
+  ctx.textAlign = 'right';
+  ctx.font = '12px "Space Mono", monospace';
+  ctx.fillStyle = '#555566';
+  ctx.fillText(dateStr, W-32, 46);
+
+  y = 100;
+
+  // Section: Decay
+  ctx.fillStyle = '#1a1a1f';
+  ctx.fillRect(24, y, W-48, 250);
+  ctx.strokeStyle = '#2e2e3a';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(24, y, W-48, 250);
+
+  ctx.fillStyle = '#00e5a0';
+  ctx.font = '10px "Space Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.letterSpacing = '2px';
+  ctx.fillText('ABKLINGKURVEN  @  500 Hz', 40, y+18);
+
+  drawDecayToCtx(ctx, 24, y+28, W-48, 210);
+
+  y += 265;
+
+  // Section: T60 bars
+  ctx.fillStyle = '#1a1a1f';
+  ctx.fillRect(24, y, W-48, 250);
+  ctx.strokeStyle = '#2e2e3a';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(24, y, W-48, 250);
+
+  ctx.fillStyle = '#00e5a0';
+  ctx.font = '10px "Space Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('T60  PRO  OKTAVBAND', 40, y+18);
+
+  drawT60ToCtx(ctx, 24, y+28, W-48, 210);
+
+  y += 265;
+
+  // Section: Table
+  const tableH = 36 + BANDS.length * 30 + 20;
+  ctx.fillStyle = '#1a1a1f';
+  ctx.fillRect(24, y, W-48, tableH);
+  ctx.strokeStyle = '#2e2e3a';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(24, y, W-48, tableH);
+
+  ctx.fillStyle = '#00e5a0';
+  ctx.font = '10px "Space Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('MESSWERTE', 40, y+18);
+
+  drawTableToCtx(ctx, 40, y+36, W-80);
+
+  y += tableH + 16;
+
+  // Section: Files
+  const filesH = 36 + results.length * 38 + 16;
+  ctx.fillStyle = '#1a1a1f';
+  ctx.fillRect(24, y, W-48, filesH);
+  ctx.strokeStyle = '#2e2e3a';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(24, y, W-48, filesH);
+
+  ctx.fillStyle = '#00e5a0';
+  ctx.font = '10px "Space Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('VERWENDETE DATEIEN', 40, y+18);
+
+  let fy = y + 36;
+  results.forEach((r, i) => {
+    ctx.fillStyle = COLORS[i % COLORS.length];
+    ctx.fillRect(40, fy, 3, 26);
+
+    ctx.fillStyle = '#e8e8f0';
+    ctx.font = '12px "Space Mono", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(r.name, 52, fy + 13);
+
+    ctx.fillStyle = '#888899';
+    ctx.font = '11px "DM Sans", sans-serif';
+    ctx.fillText(r.comment || '—', 52, fy + 28);
+
+    fy += 38;
+  });
+
+  // Download
+  const link = document.createElement('a');
+  link.download = `T60_${projectName.replace(/\s+/g,'_')}_${dateStr.replace(/\./g,'-')}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function drawDecayToCtx(ctx, ox, oy, ow, oh) {
+  const pad = {top:10,right:16,bottom:28,left:48};
+  const pw = ow-pad.left-pad.right;
+  const ph = oh-pad.top-pad.bottom;
+
+  ctx.strokeStyle = '#2e2e3a';
+  ctx.lineWidth = 1;
+  [-10,-20,-30,-40,-50,-60].forEach(db => {
+    const y = oy+pad.top + ph*(db/-70);
+    ctx.beginPath(); ctx.moveTo(ox+pad.left,y); ctx.lineTo(ox+pad.left+pw,y); ctx.stroke();
+    ctx.fillStyle='#555566';
+    ctx.font='10px "Space Mono",monospace';
+    ctx.textAlign='right';
+    ctx.fillText(db+'', ox+pad.left-4, y+4);
+  });
+
+  [0,0.5,1,1.5,2,2.5,3].forEach(t => {
+    const x = ox+pad.left+(t/3)*pw;
+    if (x <= ox+pad.left+pw+1) {
+      ctx.fillStyle='#555566';
+      ctx.font='10px "Space Mono",monospace';
+      ctx.textAlign='center';
+      ctx.fillText(t+'s', x, oy+oh-4);
+    }
+  });
+
+  results.forEach((r,ri) => {
+    const band = r.bandResults.find(b=>b.fc===500);
+    if (!band) return;
+    const decay = band.decay;
+    const sr = r.sr;
+    const maxS = Math.min(decay.length, sr*3.2);
+    const step = Math.max(1,Math.floor(maxS/pw));
+    ctx.beginPath();
+    ctx.strokeStyle = COLORS[ri%COLORS.length];
+    ctx.lineWidth = 1.8;
+    ctx.globalAlpha = 0.9;
+    let started=false;
+    for(let i=0;i<maxS;i+=step){
+      const x=ox+pad.left+(i/maxS)*pw;
+      const db=Math.max(-70,decay[i]);
+      const y=oy+pad.top+ph*(db/-70);
+      if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.globalAlpha=1;
+  });
+
+  // -5 and -35 lines
+  ctx.strokeStyle='rgba(0,229,160,0.25)';
+  ctx.setLineDash([5,5]);
+  ctx.lineWidth=1;
+  const y5=oy+pad.top+ph*(5/70);
+  ctx.beginPath();ctx.moveTo(ox+pad.left,y5);ctx.lineTo(ox+pad.left+pw,y5);ctx.stroke();
+  const y35=oy+pad.top+ph*(35/70);
+  ctx.beginPath();ctx.moveTo(ox+pad.left,y35);ctx.lineTo(ox+pad.left+pw,y35);ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle='rgba(0,229,160,0.5)';
+  ctx.font='9px "Space Mono",monospace';
+  ctx.textAlign='left';
+  ctx.fillText('-5 dB',ox+pad.left+4,y5-3);
+  ctx.fillText('-35 dB',ox+pad.left+4,y35-3);
+
+  // Legend
+  results.forEach((r,ri)=>{
+    ctx.fillStyle=COLORS[ri%COLORS.length];
+    ctx.fillRect(ox+pad.left+ri*110,oy+oh-6,16,2);
+    ctx.fillStyle='#888899';
+    ctx.font='9px "Space Mono",monospace';
+    ctx.textAlign='left';
+    ctx.fillText(r.name.length>14?r.name.slice(0,14)+'…':r.name, ox+pad.left+ri*110+20, oy+oh-2);
+  });
+}
+
+function drawT60ToCtx(ctx, ox, oy, ow, oh) {
+  const pad = {top:10,right:16,bottom:28,left:48};
+  const pw = ow-pad.left-pad.right;
+  const ph = oh-pad.top-pad.bottom;
+
+  const bandStats = BANDS.map(fc => {
+    const vals = results.map(r=>r.bandResults.find(b=>b.fc===fc)?.t60).filter(v=>v!=null&&v>0&&v<15);
+    const mean=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+    const sd=vals.length>1?Math.sqrt(vals.reduce((a,b)=>a+(b-mean)**2,0)/vals.length):0;
+    return {fc,mean,sd};
+  });
+
+  const maxT=Math.max(4,...bandStats.map(b=>b.mean||0).map(v=>v+0.3));
+
+  ctx.strokeStyle='#2e2e3a';
+  ctx.lineWidth=1;
+  [1,2,3,4].filter(v=>v<=maxT+0.5).forEach(t=>{
+    const y=oy+pad.top+ph*(1-t/maxT);
+    ctx.beginPath();ctx.moveTo(ox+pad.left,y);ctx.lineTo(ox+pad.left+pw,y);ctx.stroke();
+    ctx.fillStyle='#555566';
+    ctx.font='10px "Space Mono",monospace';
+    ctx.textAlign='right';
+    ctx.fillText(t+'s',ox+pad.left-4,y+4);
+  });
+
+  const barW=pw/BANDS.length*0.55;
+  const gap=pw/BANDS.length;
+
+  bandStats.forEach((b,i)=>{
+    const x=ox+pad.left+gap*i+gap/2-barW/2;
+    const color=COLORS[i];
+    if(b.mean!==null){
+      const barH=ph*(b.mean/maxT);
+      const y=oy+pad.top+ph-barH;
+      ctx.fillStyle=color+'33';
+      ctx.fillRect(x,y,barW,barH);
+      ctx.strokeStyle=color;
+      ctx.lineWidth=1.5;
+      ctx.strokeRect(x,y,barW,barH);
+      if(b.sd>0){
+        const sdPx=ph*(b.sd/maxT);
+        const cx=x+barW/2;
+        ctx.strokeStyle='#ffffff';
+        ctx.lineWidth=1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx,y-sdPx);ctx.lineTo(cx,y+sdPx);
+        ctx.moveTo(cx-5,y-sdPx);ctx.lineTo(cx+5,y-sdPx);
+        ctx.moveTo(cx-5,y+sdPx);ctx.lineTo(cx+5,y+sdPx);
+        ctx.stroke();
+      }
+      ctx.fillStyle=color;
+      ctx.font='bold 11px "Space Mono",monospace';
+      ctx.textAlign='center';
+      ctx.fillText(b.mean.toFixed(2),x+barW/2,y-6);
+    }
+    const fcLabel=b.fc>=1000?(b.fc/1000)+'k':b.fc+'';
+    ctx.fillStyle='#888899';
+    ctx.font='10px "Space Mono",monospace';
+    ctx.textAlign='center';
+    ctx.fillText(fcLabel+'Hz',x+barW/2,oy+oh-4);
+  });
+}
+
+function drawTableToCtx(ctx, x, y, w) {
+  const bandStats = BANDS.map(fc => {
+    const vals = results.map(r=>r.bandResults.find(b=>b.fc===fc)?.t60).filter(v=>v!=null&&v>0&&v<15);
+    const mean=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+    const sd=vals.length>1?Math.sqrt(vals.reduce((a,b)=>a+(b-mean)**2,0)/vals.length):0;
+    return {fc,mean,sd,n:vals.length};
+  });
+
+  const cols=[w*0.25, w*0.35, w*0.25, w*0.15];
+  const headers=['Band','T60 (s)','± SD','n'];
+  headers.forEach((h,i)=>{
+    ctx.fillStyle='#555566';
+    ctx.font='10px "Space Mono",monospace';
+    ctx.textAlign= i===0?'left':'right';
+    const cx = x + cols.slice(0,i).reduce((a,b)=>a+b,0) + (i===0?0:cols[i]);
+    ctx.fillText(h, cx, y);
+  });
+
+  ctx.strokeStyle='#2e2e3a';
+  ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x,y+6);ctx.lineTo(x+w,y+6);ctx.stroke();
+
+  let ry=y+26;
+  bandStats.forEach((b,bi)=>{
+    const fcLabel=b.fc>=1000?(b.fc/1000)+' kHz':b.fc+' Hz';
+    const vals2=[
+      fcLabel,
+      b.mean!==null?b.mean.toFixed(3):'—',
+      b.mean!==null&&b.sd>0?'±'+b.sd.toFixed(3):'—',
+      ''+b.n
+    ];
+    vals2.forEach((v,i)=>{
+      ctx.fillStyle=i===0?COLORS[bi%COLORS.length]:(i===2||i===3)?'#888899':'#e8e8f0';
+      ctx.font=(i===0?'bold ':'')+'11px "Space Mono",monospace';
+      ctx.textAlign=i===0?'left':'right';
+      const cx=x+cols.slice(0,i).reduce((a,b)=>a+b,0)+(i===0?0:cols[i]);
+      ctx.fillText(v,cx,ry);
+    });
+    if(bi<bandStats.length-1){
+      ctx.strokeStyle='rgba(46,46,58,0.5)';
+      ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(x,ry+8);ctx.lineTo(x+w,ry+8);ctx.stroke();
+    }
+    ry+=30;
+  });
+}
+</script>
+</body>
+</html>
